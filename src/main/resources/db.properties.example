@@ -1,0 +1,8 @@
+# Database Configuration
+# Copy this file to db.properties (same directory) and fill in your values.
+# db.properties is in .gitignore and will NOT be committed.
+
+db.url=jdbc:postgresql://localhost:5432/devicedb
+db.username=portfolio
+db.password=YOUR_PASSWORD_HERE
+db.pool.size=10
