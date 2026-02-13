@@ -1,0 +1,78 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Package
+    runs-on: ubuntu-latest
+
+    # PostgreSQL runs as a Docker sidecar container next to the job.
+    # GitHub Actions health-check waits until the DB is ready before
+    # any steps run — no sleep/retry logic needed in our scripts.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: portfolio
+          POSTGRES_PASSWORD: portfolio_dev_password
+          POSTGRES_DB: devicedb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # actions/setup-java handles JDK download + Maven dependency caching.
+      # The cache key is based on pom.xml hash → cache is invalidated on
+      # dependency changes automatically.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      # db.properties is gitignored (contains credentials).
+      # We recreate it here with CI-specific values pointing to the
+      # service container that is listening on localhost:5432.
+      - name: Create db.properties for CI
+        run: |
+          cat > src/main/resources/db.properties << 'EOF'
+          db.url=jdbc:postgresql://localhost:5432/devicedb
+          db.username=portfolio
+          db.password=portfolio_dev_password
+          db.pool.size=5
+          EOF
+
+      - name: Initialize database schema
+        run: PGPASSWORD=portfolio_dev_password psql -h localhost -U portfolio -d devicedb < db/schema.sql
+
+      - name: Compile
+        run: mvn clean compile
+
+      # All 21 tests run:
+      #   DeviceTest (12 unit tests, no DB) — always pass
+      #   DeviceDAOTest (9 integration tests, real DB) — pass with service container
+      - name: Run tests
+        run: mvn test
+
+      - name: Package fat JAR
+        run: mvn clean package -DskipTests
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-inventory-cli-${{ github.sha }}
+          path: target/device-inventory-cli-*-jar-with-dependencies.jar
+          retention-days: 30
