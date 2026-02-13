@@ -4,17 +4,13 @@ stages:
   - package
 
 variables:
-  MAVEN_CLI_OPTS: "-s .m2/settings.xml -DskipTests"
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=/home/dev/.m2/repository"
 
-cache:
-  paths:
-    - .m2/repository/
-    - target/
-
+# Shell executor on VPS — no Docker image needed, Maven is installed directly
 build:
   stage: build
-  image: maven:3.8.7-openjdk-17
+  tags:
+    - vps
   script:
     - mvn clean compile
   artifacts:
@@ -24,7 +20,8 @@ build:
 
 test:
   stage: test
-  image: maven:3.8.7-openjdk-17
+  tags:
+    - vps
   script:
     - mvn test
   dependencies:
@@ -32,7 +29,8 @@ test:
 
 package:
   stage: package
-  image: maven:3.8.7-openjdk-17
+  tags:
+    - vps
   script:
     - mvn clean package -DskipTests
   artifacts:
@@ -41,5 +39,5 @@ package:
       - target/device-inventory-cli-*-jar-with-dependencies.jar
     expire_in: 30 days
   only:
-    - main
+    - master
     - tags
