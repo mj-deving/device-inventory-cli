@@ -28,6 +28,12 @@ Build foundational Java skills:
 - PostgreSQL 16 running with `portfolio` user
 - Database: `devicedb`
 
+### IDE Setup
+
+**Eclipse:** File → Import → Existing Maven Projects → select project root
+
+**IntelliJ IDEA:** File → Open → select `pom.xml` → Open as Project
+
 ### Build
 
 ```bash
@@ -116,6 +122,17 @@ db.password=portfolio_dev_password
 db.pool.size=10
 db.pool.max.lifetime=1800000
 ```
+
+## Development Workflow
+
+This project was developed using an agile, issue-driven workflow:
+
+- **Issue tracking** via GitHub Issues and GitLab Boards (Kanban-style)
+- **Conventional commits** (`feat:`, `fix:`, `test:`, `refactor:`, `docs:`)
+- **Dual-remote** repository (GitHub + GitLab)
+- **AI-assisted development** with Claude Code (~80% implementation, human architecture decisions)
+
+---
 
 ## Learning Documentation
 
